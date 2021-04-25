@@ -1,0 +1,321 @@
+---
+title: "Final Project Draft"
+author: "Kyla Beasley, Stephanie Boehm, Krys Morawa, and Daria Petrukhina"
+date: "11/24/2020"
+output: html_document
+---
+
+
+```{r, echo = FALSE, results= FALSE}
+#Set Working Directory
+setwd("C:/Users/Stephanie/Documents/STAT382")
+#Read data in data frame
+df <- read.csv('COVID-19_Daily_Cases__Deaths__and_Hospitalizations.csv', sep = ",")
+```
+
+Check for missing data
+```{r, results = FALSE}
+str(df) # 5 missing values each for 19 different variables 
+df[is.na(df) == TRUE] <- 0 # change NA values to 0
+```
+
+------
+
+### Compute summary statistics 
+
+```{r, echo = FALSE, results = FALSE}
+#Function for skew
+skew <- function(x){
+  m3 <- sum((x-mean(x))^3)/length(x)
+  m3/(sd(x)^3)
+}
+
+#Function for kurtotis
+kurt <- function(x){
+  m4 <- sum((x-mean(x))^4)/length(x)
+  m4/(sd(x)^4)
+}
+
+``` 
+
+```{r, results = FALSE}
+summary(df)
+```
+
+```{r}
+sapply(df[c(6, 10, 24, 28)], skew)
+sapply(df[c(6, 10, 24, 28)], kurt)
+sapply(X = df[c(6, 10, 24, 28)], hist)
+sapply(df[c(6, 10, 24, 28)], boxplot)
+```
+
+None of the variables have a normal distribution because the  
+skewness is not close to zero and the kurtosis is not close to  
+three for any of the variables. None of the histograms look normal  
+and each graph is skewed to the left and it may potentially contain  
+some outlines.
+
+------
+
+### Hypothesis Testing
+
+People in the age group of 18-29 are more likely to catch COVID-19 than people in the age group 60-69
+People 18-29 are more likely to go out in high COVID-19 areas like bars, parties, and restaurants than
+people 60-69 because people who are older tend to have other people such as other relatives like children,
+grandchildren, or partners, or have issues themselves which makes it difficult to go out such as health
+problems or unable to drive. People who are younger tend to have less restrictions stopping them from going out.
+
+* $H_0:  mu_1 - mu_2 = 0$
+  + The null hypothesis is that the mean number of cases for ages 18-29 is equal to those that are ages 60-69.
+* $H_1:  mu_1 - mu_2 > 0$
+  + The alternative is that the mean number of cases for ages 18-29 is greater than those that are ages 60-69.
+
+```{r}
+t.test(df$Cases...Age.18.29, df$Cases...Age.60.69, alternative = c("greater"))
+```
+
+The P-value is less than 0.05. Reject the null hypothesis, accept the alternative.
+There is significant evidence that the mean mean number of cases for ages 18-29 is greater than those that 
+are ages 60-69.
+
+People in the age group 18-29 are less likely to die from COVID-19 than people in the age group 60-69. 
+People 18-29 tend to have stronger immune systems to fight the illness than people 60-69, which causes 
+there to be more deaths in the age range 60-69 than 18-29. 
+
+* $H_0:  mu_1 - mu_2 = 0$
+  + The null hypothesis is that the mean number of deaths for ages 18-29 is equal to those that are ages 60-69.
+* $H_1:  mu_1 - mu_2 < 0$
+  + The alternative is that the mean number of deaths for ages 18-29 is less than those that are ages 60-69.
+  
+```{r}
+t.test(df$Deaths...Age.18.29, df$Deaths...Age.60.69, alternative = c("less"))
+```
+
+The P-value is less than 0.05. Reject the null hypothesis, accept the alternative.  
+There is significant evidence that the mean mean number of deaths for ages 18-29 is less than those that 
+are ages 60-69.
+
+------
+
+### Linear Association 
+
+The explanatory variable is Cases Ages 18-29 and the response variable is Deaths Ages 18-29. 
+The explanatory variable is Cases Ages 18-29 because a person has to have COVID in order to have that 
+be the cause of death, so the response variable is Deaths Ages 18-29 since people die from COVID.
+
+I expect there to be a moderately weak positive linear association. I expect there to be a weak 
+association because if there are a lot of cases then there will be many deaths because people who are ages 
+18-29 tend to have better immue systems which will help fight off the virvus and prevent death.
+
+I expect there to be a positive association because when it is positive is means 
+that the values of one variable tend to increase as the values of the other variable increase which is 
+when the number of cases increase, then so do the number of deaths because there are more people likely 
+to die from COVID-19 when more people have it.
+
+I expect there to be a linear association because I expect 
+there to be some type of association. 
+
+```{r}
+plot(df$Cases...Age.18.29, df$Deaths...Age.18.29) 
+cor(df$Cases...Age.18.29, df$Deaths...Age.18.29)
+```
+
+The correlation coefficient is positive and close to 0, indicating a weak, positive, linear 
+association between Cases Ages 18-29 and Deaths Ages 18-29.
+
+```{r}
+regline <- lm(Deaths...Age.18.29~ Cases...Age.18.29, data=df) 
+summary(regline)
+```
+
+* The regression line $y= 3.752e-05x + 8.780e^-02$  
+The parameter $3.752e-05$ is the slope of the equation. The parameter $8.780e-02$ is the intercept for the equation.
+The X variable is the explanatory variable and the Y variable is the response variable. 
+
+```{r}
+plot(df$Cases...Age.18.29, df$Deaths...Age.18.29)
+abline(regline, col="red")
+```
+
+From the plot, we can see that Deaths Ages 18-29 is constant, there was only one outlier in Deaths Ages 18-29.  
+We can conclude that there is no association between Deaths Ages 18-29 and Cases Ages 18-29.  
+
+```{r, echo=FALSE, results=FALSE}
+df2 <- resid(regline) 
+df2
+```
+
+```{r}
+plot(df$Cases...Age.18.29, df2) 
+abline(h = 0)
+```
+Residuals are normally distributed, and randomly scattered in the scatterplot, and they have a   
+constant variance (homoscedasticity). This is consistent with what we would expect if the regression  
+line were appropriate.
+
+```{r}
+hist(df2)
+```
+The histogram does not look normal so it is not consistent with what we would expect if the regression 
+were appropriate. 
+
+```{r}
+shapiro.test(df2)
+```
+The p-value is less than 0.05, so reject the null hypothesis that the residuals are normal. It is not 
+consistent with what we would expect if the regression were appropriate. 
+
+--------
+
+```{r}
+model1 <- lm(Deaths...Age.18.29~Cases...Age.18.29, data = df)
+summary(model1)
+```
+
+
+ R^2 is 0.0002392 which is close to 0 which means that the model does not fit the data well.  
+ The explanatory variable is Cases Ages 60-69 and the response variable is Deaths Ages 60-69. 
+ The explanatory variable is Cases Ages 60-69 because a person has to have COVID in order to have that 
+ be the cause of death, so the response variable is Deaths Ages 60-69 since people die from COVID. 
+ I expect there to be a moderately strong positive linear association. I expect there to be a strong 
+ association because when older people tend to get sick, their immue system is not strong enough to fight off 
+ the virus and causing death. I expect there to be a positive association because when it is positive is means 
+ that the values of one variable tend to increase as the values of the other variable increase which is 
+ when the number of cases increase, then so do the number of deaths because there are more people likely 
+ to die from COVID-19 when more people have it. I expect there to be a linear association because I expect 
+ there to be some type of association. 
+
+```{r}
+plot(df$Cases...Age.60.69, df$Deaths...Age.60.69) 
+cor(df$Cases...Age.18.29, df$Deaths...Age.18.29)
+```
+
+ The correlation coefficient is positive and close to 0, indicating a weak, positive, linear
+ association between Cases Ages 60-69 and Deaths Ages 60-69.
+
+```{r}
+regline2 <- lm(Deaths...Age.60.69~ Cases...Age.60.69, data=df) 
+summary(regline2)
+```
+
+ the regression line y= 0.035688x + 1.026633
+ The parameter 0.035688x is the slope of the equation. The parameter 1.026633 is the intercept for the equation.
+ The X variable is the explanatory variable and the Y variable is the response variable. 
+
+```{r}
+plot(df$Cases...Age.60.69, df$Deaths...Age.60.69)
+abline(regline2, col="red")
+```
+
+
+ from the plot, we can see that Deaths Ages 60-69 is constant, there was only one outlier in Deaths Ages 60-69
+ We can conclude that there is some association between Deaths Ages 60-69 and Cases Ages 60-69
+
+```{r, echo = FALSE, results= FALSE}
+df3 <- resid(regline2) 
+df3
+```
+
+```{r}
+plot(df$Cases...Age.60.69, df3) 
+abline(h = 0)
+```
+
+ Residuals are normally distributed, and randomly scattered in the scatterplot, and they have a  
+ constant variance (homoscedasticity). This is consistent with what we would expect if the regression
+ line were appropriate. 
+
+```{r}
+hist(df3)
+```
+
+ The histogram does look normal so it is consistent with what we would expect if the regression 
+ were appropriate. 
+
+```{r}
+shapiro.test(df3)
+```
+
+ The p-value is less than 0.05, so reject the null hypothesis that the residuals are normal. It is not 
+ consistent with what we would expect if the regression were appropriate. 
+
+```{r}
+model2 <- lm(Deaths...Age.60.69~Cases...Age.60.69, data = df)
+summary(model2)
+```
+
+ R^2 is 0.206 which is closer to 0 than 1 which means that the model does not fit the data well.  
+
+------
+
+### ANOVA 
+
+
+```{r, results = FALSE}
+na.omit(df)
+library(tidyverse)
+dfnew <- separate(df, "Date", c("Month", "Day", "Year"), sep = "/")
+dfnew
+```
+
+```{r}
+boxplot(dfnew$Cases...Total~dfnew$Month)
+```
+
+ looks like there might be some differences
+
+*  $H_0: mu_3 = mu_4 = mu_5 = mu_6 = mu_7 = mu_8 = mu_9 = mu_10 = mu_11$
+*  $H_1: !H_0$. At least two are different.
+
+```{r}
+casesanova <- aov(Cases...Total~Month, data = dfnew) 
+summary(casesanova)
+```
+
+ The F statistic is 35.25 and the p-value is 2e-16.
+ P-value is small. We can conclude that there is a difference in the means of 
+ the 9 groups. The result is that there is significant evidence that the means are not all equal.  
+
+```{r}
+TukeyHSD(casesanova, conf.level = .95)
+plot(TukeyHSD(casesanova, conf.level = .95))
+```
+
+```{r}
+boxplot(dfnew$Deaths...Total~dfnew$Month)
+```
+
+ looks like there might be some differences
+
+*  $H_0: mu_3 = mu_4 = mu_5 = mu_6 = mu_7 = mu_8 = mu_9 = mu_10 = mu_11$
+*  $H_1: !H_0$. At least two are different.
+
+```{r}
+deathsanova <- aov(Deaths...Total~Month, data = dfnew) 
+summary(deathsanova)
+```
+
+```
+The F statistic is 148.6 and the p-value is 2e-16.
+```
+
+
+P-value is small. We can conclude that there is a difference in the means of 
+the 9 groups. The result is that there is significant evidence that the means are not all equal.  
+
+```{r}
+TukeyHSD(deathsanova, conf.level = .95)
+plot(TukeyHSD(deathsanova, conf.level = .95))
+
+```
+
+
+
+
+
+
+
+
+
+
+
